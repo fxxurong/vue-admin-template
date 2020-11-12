@@ -1,11 +1,13 @@
 <template>
-  <div class="login-container">
+<!-- 登陆页面容器 -->
+  <div class="login-container"> 
+    <!-- 登陆表单 -->
     <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" auto-complete="on" label-position="left">
-
+      <!-- 登陆表单标题 -->
       <div class="title-container">
-        <h3 class="title">Login Form</h3>
+        <h3 class="title">如艺纺服饰登陆</h3>
       </div>
-
+      <!-- 用户名 -->
       <el-form-item prop="username">
         <span class="svg-container">
           <svg-icon icon-class="user" />
@@ -13,7 +15,7 @@
         <el-input
           ref="username"
           v-model="loginForm.username"
-          placeholder="Username"
+          placeholder="用户名"
           name="username"
           type="text"
           tabindex="1"
@@ -21,6 +23,7 @@
         />
       </el-form-item>
 
+      <!-- 密码 -->
       <el-form-item prop="password">
         <span class="svg-container">
           <svg-icon icon-class="password" />
@@ -30,19 +33,22 @@
           ref="password"
           v-model="loginForm.password"
           :type="passwordType"
-          placeholder="Password"
+          placeholder="密码"
           name="password"
           tabindex="2"
           auto-complete="on"
           @keyup.enter.native="handleLogin"
         />
+        <!--@keyup.enter.native="handleLogin" 监听键盘输入   -->
         <span class="show-pwd" @click="showPwd">
           <svg-icon :icon-class="passwordType === 'password' ? 'eye' : 'eye-open'" />
         </span>
       </el-form-item>
 
+      <!-- 登陆按键 -->
       <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleLogin">Login</el-button>
 
+       <!-- 登陆提示 -->
       <div class="tips">
         <span style="margin-right:20px;">username: admin</span>
         <span> password: any</span>
@@ -105,6 +111,7 @@ export default {
         this.$refs.password.focus()
       })
     },
+    //  提交登陆信息或者监听输入数据是否符合规则
     handleLogin() {
       this.$refs.loginForm.validate(valid => {
         if (valid) {
