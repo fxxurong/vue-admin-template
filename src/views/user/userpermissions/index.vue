@@ -4,9 +4,7 @@
   </div>
 </template>
 
-<script>
-
-</script>
+<script></script>
 
 <style lang="less" scoped>
 .profile {

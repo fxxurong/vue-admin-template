@@ -1,19 +1,19 @@
 <template>
-<div class="samplelist-container">
+  <div class="samplelist-container">
     <div class="samplelist-text">客户</div>
-</div>
+  </div>
 </template>
 
 <style lang="less" scoped>
 .samplelist {
-    &-container {
-        margin: 30px;
-    }
+  &-container {
+    margin: 30px;
+  }
 
-    &-text {
-        font-size: 30px;
-        line-height: 46px;
-        text-align: center;
-    }
+  &-text {
+    font-size: 30px;
+    line-height: 46px;
+    text-align: center;
+  }
 }
 </style>

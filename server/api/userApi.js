@@ -1,167 +1,178 @@
-var models = require("../db/db");
-var express = require("express");
-var router = express.Router();
-var mysql = require("mysql");
-var $sql = require("../db/sqlMap");
+const models = require('../db/db');
+const express = require('express');
+const router = express.Router();
+const mysql = require('mysql');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const { decode, jwtAuth } = require('../utils/user-jwt');
+const md5 = require('../utils/md5');
+const { PRIVATE_KEY, JWT_EXPIRED } = require('../utils/constant');
 
-var conn = mysql.createConnection(models.mysql);
+router.use(jwtAuth);
 
+const $sql = require('../db/sqlMap');
+
+// 连接数据库
+const conn = mysql.createConnection(models.mysql);
 conn.connect();
 
-var jsonWrite = function(res, ret) {
-  if (typeof ret === "undefined") {
-    res.send("err");
-  } else {
-    console.log(ret);
-    res.send(ret);
-  }
-};
-
-var dateStr = function(str) {
-  return new Date(str.slice(0, 7));
-};
-
-// 增加用户接口
-router.post("/addUser", (req, res) => {
-  var sql = $sql.user.add;
-  var params = req.body;
-  console.log(params);
-  console.log(params.birth);
-  conn.query(
-    sql,
-    [
-      params.name,
-      params.account,
-      params.pass,
-      params.checkPass,
-      params.email,
-      params.phone,
-      params.card,
-      dateStr(params.birth),
-      params.sex
-    ],
-    function(err, result) {
-      if (err) {
-        console.log(err);
-      }
-      if (result) {
-        jsonWrite(res, result);
-      }
-    }
-  );
+// 所有用户列表
+router.get('/userlist', (req, res) => {
+  // const { username } = decode(req) || {};
+  const { userlist } = $sql.user;
+  conn.query(userlist, (err, data) => {
+    res.send({
+      code: 20000,
+      data,
+    });
+  });
 });
 
-//查找用户接口
-router.post("/login", (req, res) => {
-  var sql_name = $sql.user.select_name;
-  // var sql_password = $sql.user.select_password;
-  var params = req.body;
-  console.log(params);
-  if (params.name) {
-    sql_name += "where username ='" + params.name + "'";
-  }
-  var keywords = JSON.parse(Object.keys(params)[0]);
-  conn.query(sql_name, params.name, function(err, result) {
+// 返回用户信息
+router.get('/info', (req, res) => {
+  // 解析token 并且token存在
+  const { username } = decode(req) || {};
+  const getInfo = $sql.user.finduserbyusername;
+  conn.query(getInfo, username, (err, info) => {
+    // eslint-disable-next-line no-shadow
+    const { roles, introduction, avatar, name, email } = info[0];
+    res.send({
+      code: 20000,
+      data: {
+        roles: [roles],
+        introduction,
+        avatar,
+        name,
+        email,
+      },
+    });
+  });
+});
+
+// 登陆接口
+router.post('/login', (req, res) => {
+  const login = req.body;
+  const finduser = $sql.user.finduserbyusername;
+  conn.query(finduser, login.username, (err, user) => {
     if (err) {
-      console.log(err);
+      throw err;
     }
-    // console.log(result);
-    if (result[0] === undefined) {
-      res.send("-1"); //查询不出username，data 返回-1
+    if (user.length === 0) {
+      res.send({ message: '没有这个用户' });
     } else {
-      var resultArray = result[0];
-      console.log(resultArray.password);
-      // console.log(keywords);
-      if (resultArray.password === keywords.password) {
-        jsonWrite(res, result);
+      const {
+        username,
+        password,
+        name,
+        avatar,
+        roles,
+        introduction,
+        status,
+      } = user[0];
+      if (status === '停用') {
+        res.send({ message: '这个用户已停用' });
       } else {
-        res.send("0"); //username
+        bcrypt.compare(login.password, password, (err, result) => {
+          if (err) {
+            throw err;
+          }
+          const token = jwt.sign({ username }, PRIVATE_KEY, {
+            expiresIn: JWT_EXPIRED,
+          });
+          // eslint-disable-next-line no-unused-expressions
+          result
+            ? res.send({
+                code: 20000,
+                data: {
+                  token,
+                  avatar,
+                  name,
+                  roles,
+                  introduction,
+                },
+              })
+            : res.send({ message: '密码错误' });
+        });
       }
     }
   });
 });
 
-//获取用户信息
-router.get("/getUser", (req, res) => {
-  var sql_name = $sql.user.select_name;
-  // var sql_password = $sql.user.select_password;
-  var params = req.body;
-  console.log(params);
-  if (params.name) {
-    sql_name += "where username ='" + params.name + "'";
-  }
-  conn.query(sql_name, params.name, function(err, result) {
+// 删除用户接口
+// eslint-disable-next-line no-unused-vars
+router.post('/delUser', (req, res) => {
+  const { username } = req.body;
+  const delUser = $sql.user.deluserbyusername;
+  conn.query(delUser, username, (err, result) => {
     if (err) {
-      console.log(err);
-    }
-    // console.log(result);
-    if (result[0] === undefined) {
-      res.send("-1"); //查询不出username，data 返回-1
-    } else {
-      jsonWrite(res, result);
-    }
-  });
-});
-
-//更新用户信息
-router.post("/updateUser", (req, res) => {
-  var sql_update = $sql.user.update_user;
-  var params = req.body;
-  console.log(params);
-  if (params.id) {
-    sql_update +=
-      " email = '" +
-      params.email +
-      "',phone = '" +
-      params.phone +
-      "',card = '" +
-      params.card +
-      "',birth = '" +
-      params.birth +
-      "',sex = '" +
-      params.sex +
-      "' where id ='" +
-      params.id +
-      "'";
-  }
-  conn.query(sql_update, params.id, function(err, result) {
-    if (err) {
-      console.log(err);
+      throw err;
     }
     console.log(result);
-    if (result.affectedRows === undefined) {
-      res.send("更新失败，请联系管理员"); //查询不出username，data 返回-1
-    } else {
-      res.send("ok");
+    res.send({ message: '成功删除用户', code: '20000', data: 'success' });
+  });
+});
+
+// 登出接口
+router.post('/logout', (req, res) => {
+  res.send({
+    code: 20000,
+    data: 'success',
+  });
+});
+
+//  添加用户接口
+router.post('/addUser', (req, res) => {
+  // 第一步验证用户名是否存在
+  const validUsername = req.body.username;
+  const finduser = $sql.user.finduserbyusername;
+  conn.query(finduser, validUsername, (err, user) => {
+    if (err) {
+      throw err;
+    }
+    if (user.length === 0) {
+      const newUser = req.body;
+      const { addUser } = $sql.user;
+      const saltRounds = 10;
+      bcrypt.hash(newUser.password, saltRounds, hash => {
+        conn.query(
+          addUser,
+          [newUser.username, newUser.name, hash, newUser.email, newUser.roles],
+          (err, result) => {
+            if (err) {
+              throw err;
+            }
+            console.log(result);
+            res.send({ message: '添加用户成功', code: 20000 });
+          }
+        );
+      });
     }
   });
 });
 
-//更改密码
-router.post("/modifyPassword", (req, res) => {
-  var sql_modify = $sql.user.update_user;
-  var params = req.body;
-  console.log(params);
-  if (params.id) {
-    sql_modify +=
-      " password = '" +
-      params.pass +
-      "',repeatPass = '" +
-      params.checkPass +
-      "' where id ='" +
-      params.id +
-      "'";
-  }
-  conn.query(sql_modify, params.id, function(err, result) {
+// 更新用户状态
+router.post('/updatestatus', (req, res) => {
+  const { status, username } = req.body;
+  const { updatestatus } = $sql.user;
+  conn.query(updatestatus, [status, username], err => {
     if (err) {
-      console.log(err);
+      throw err;
     }
-    // console.log(result);
-    if (result.affectedRows === undefined) {
-      res.send("修改密码失败，请联系管理员"); //查询不出username，data 返回-1
-    } else {
-      res.send("ok");
+    res.send({ message: '修改成功', code: 20000 });
+  });
+});
+
+// 显示指定数量样板资料
+router.get('/sampleList', (req, res) => {
+  const { samplelist } = $sql.user;
+  conn.query(samplelist, (err, data) => {
+    if (err) {
+      throw err;
     }
+    res.send({
+      code: 20000,
+      data,
+    });
   });
 });
 

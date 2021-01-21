@@ -1,33 +1,49 @@
 <template>
-  <div class="navbar"><!-- 顶部导航条 -->
-    
+  <div class="navbar">
+    <!-- 顶部导航条 -->
+
     <hamburger
       :is-active="sidebar.opened"
       class="hamburger-container"
       @toggleClick="toggleSideBar"
-    /> <!-- 侧边栏隐藏打开按钮 -->
-    
+    />
+    <!-- 侧边栏隐藏打开按钮 -->
+
     <breadcrumb class="breadcrumb-container" />
 
     <div class="right-menu">
       <!-- 右侧菜单容器 -->
       <template v-if="device !== 'mobile'">
-        <screenfull id="screenfull" class="right-menu-item hover-effect" /><!-- 全屏按钮 -->
+        <screenfull id="screenfull" class="right-menu-item hover-effect" />
+        <!-- 全屏按钮 -->
       </template>
-      
-      <el-dropdown class="avatar-container" trigger="click"> <!-- 下拉菜单头像按钮 -->
-       
+
+      <el-dropdown class="avatar-container">
         <div class="avatar-wrapper">
           <img :src="avatar + '?imageView2/1/w/80/h/80'" class="user-avatar" />
           <i class="el-icon-caret-bottom" />
         </div>
-        <el-dropdown-menu slot="dropdown" class="user-dropdown">
-          <router-link to="/">
-            <el-dropdown-item>控制台</el-dropdown-item>
-          </router-link>
+        <el-dropdown-menu
+          slot="dropdown"
+          class="user-dropdown"
+          style=" text-align: center;"
+        >
           <router-link to="/profile">
             <el-dropdown-item>用户资料</el-dropdown-item>
           </router-link>
+          <a
+            href="https://panjiachen.gitee.io/vue-element-admin-site/zh/"
+            target="_blank"
+          >
+            <el-dropdown>
+              <el-dropdown-item>admin-element</el-dropdown-item>
+            </el-dropdown></a
+          >
+          <a href="https://element.eleme.cn/#/zh-CN" target="_blank">
+            <el-dropdown>
+              <el-dropdown-item>element</el-dropdown-item>
+            </el-dropdown></a
+          >
           <el-dropdown-item divided @click.native="logout">
             <span style="display: block">Log Out</span>
           </el-dropdown-item>
@@ -38,10 +54,10 @@
 </template>
 
 <script>
-import { mapGetters } from "vuex";
-import Breadcrumb from "@/components/Breadcrumb";
-import Hamburger from "@/components/Hamburger";
-import Screenfull from "@/components/Screenfull";
+import { mapGetters } from 'vuex';
+import Breadcrumb from '@/components/Breadcrumb';
+import Hamburger from '@/components/Hamburger';
+import Screenfull from '@/components/Screenfull';
 export default {
   components: {
     Breadcrumb,
@@ -49,20 +65,20 @@ export default {
     Screenfull,
   },
   computed: {
-    ...mapGetters(["sidebar", "avatar", "device"]),
+    ...mapGetters(['sidebar', 'avatar', 'device', 'name']),
   },
   methods: {
     toggleSideBar() {
-      this.$store.dispatch("app/toggleSideBar");
+      this.$store.dispatch('app/toggleSideBar');
     },
     async logout() {
-      await this.$store.dispatch("user/logout");
+      await this.$store.dispatch('user/logout');
       this.$router.push(`/login?redirect=${this.$route.fullPath}`);
     },
   },
 };
-var i="device"
-document.write(i)
+var i = 'device';
+document.write(i);
 </script>
 
 <style lang="scss" scoped>

@@ -1,0 +1,47 @@
+@url=http://localhost:3001/api
+
+@json=Content-Type: application/json
+
+###显示所有用户
+get {{url}}/userlist
+
+
+
+
+####显示指定用户信息
+get {{url}}/userInfo
+{{json}}
+
+{ "username": "xuping"}
+
+###返回用户信息
+get {{url}}/info
+{{json}}
+
+{ "name": "许荣"}
+
+
+###登出
+post {{url}}/logout
+
+###登陆
+post {{url}}/login
+{{json}}
+
+{ "username": "xuron", "password":"12345"}
+
+### 增加用户
+post {{url}}/addUser
+{{json}}
+
+{ "username": "test2", "password":"123456","email":"test2@gmail.com"}
+
+###删除用户
+post {{url}}/delUser
+{{json}}
+
+{ "username": "test8"}
+
+###获取样板列表
+get {{url}}/sampleList
+
